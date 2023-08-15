@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    restart: "unless-stopped"
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dev
+      VOLUMES_DIR: bg3_dev
+    volumes:
+      - "~/bg3_dev/pg-data:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
