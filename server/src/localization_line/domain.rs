@@ -1,3 +1,5 @@
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -12,12 +14,12 @@ struct TranslationLocation{
     contentuid: Uuid,
 }
 
-#[derive(sqlx::FromRow, Debug)]
+#[derive(sqlx::FromRow, Debug, Deserialize, Serialize)]
 pub struct TranslationVariant{
     id: Uuid,
     contentuid: String,
     file_path: String,
-    localization_date: String, // datetime format
+    localization_date: NaiveDateTime,
     lang: String,
     version: i32,
     text: String,

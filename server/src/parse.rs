@@ -3,7 +3,7 @@ use std::io::BufReader;
 use uuid::{Uuid, uuid};
 use xml::reader::EventReader;
 use xml::reader::XmlEvent;
-use crate::domain::LocalizationLine;
+use crate::localization_line::domain::LocalizationLine;
 
 pub fn parse_translation(file: File) -> std::io::Result<Vec<LocalizationLine>> {
     let file = BufReader::new(file);

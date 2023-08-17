@@ -1,38 +1,48 @@
-#![feature(slice_first_last_chunk)]
+use std::{net::SocketAddr, time::Duration};
 
-mod parse;
-mod domain;
-mod table;
-mod repository;
-use std::env;
-
-use std::fs::File;
+use axum::Router;
+use axum::routing::post;
 use dotenv::dotenv;
-use crate::parse::parse_translation;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use sqlx::{Acquire, Error, Pool, Postgres};
-use sqlx::postgres::any::AnyConnectionBackend;
 use sqlx::postgres::PgPoolOptions;
-use crate::domain::{LocalizationLine, TranslationVariant};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-const MAX_CONNECTIONS: u32 = 20;
-
-pub async fn establish_connection(database_url: &str) -> Pool<Postgres> {
-    PgPoolOptions::new().max_connections(MAX_CONNECTIONS).connect(database_url).await.unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-}
+pub mod localization_line;
+mod axum_common;
+mod parse;
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-    let connection = establish_connection(&database_url).await;
-    let mut pool = connection.try_acquire().unwrap();
+    let db_connection_str = std::env::var("DATABASE_URL")
+        .expect("can`t connect to database");
 
-    // let a_poll = Arc::new(Mutex::new(pool));
+    // setup connection pool
+    let pool = PgPoolOptions::new()
+        .max_connections(20)
+        .acquire_timeout(Duration::from_secs(3))
+        .connect(&db_connection_str)
+        .await
+        .expect("can't connect to database");
 
+    // build our application with some routes
+    let app = Router::new()
+        .route("/localization_line", post(localization_line::routes::create_localization_line).get(localization_line::routes::get_localization_lines))
+        .with_state(pool);
+
+    // run it with hyper
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+
+    /*
     let file= File::open("./data/ukrainian.xml")?;
     let lines: Vec<LocalizationLine> = parse_translation(file)?;
 
@@ -41,7 +51,6 @@ async fn main() -> std::io::Result<()> {
             Ok(_) => {}
             Err(_) => {}
         }
-    }
-
-    Ok(())
+    }*/
 }
+
