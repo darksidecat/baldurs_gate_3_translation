@@ -10,12 +10,12 @@ pub struct LocalizationLine {
 }
 
 #[derive(sqlx::FromRow, Debug)]
-struct TranslationLocation{
+struct TranslationLocation {
     contentuid: Uuid,
 }
 
 #[derive(sqlx::FromRow, Debug, Deserialize, Serialize)]
-pub struct TranslationVariant{
+pub struct TranslationVariant {
     id: Uuid,
     contentuid: String,
     file_path: String,
@@ -23,29 +23,31 @@ pub struct TranslationVariant{
     lang: String,
     version: i32,
     text: String,
+    created_at: NaiveDateTime,
+    updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(sqlx::FromRow, Debug)]
-struct Vocabulary{
+struct Vocabulary {
     id: Uuid,
     word: String,
 }
 
 #[derive(sqlx::FromRow, Debug)]
-struct VocabularyUsages{
+struct VocabularyUsages {
     id: Uuid,
     word_id: Uuid,
     translation_variant_id: Uuid,
 }
 
 //create in db
-struct VocabularyTag{
-    id:Uuid,
+struct VocabularyTag {
+    id: Uuid,
     tag: String,
 }
 
 //create in db
-struct VocabularyTags{
+struct VocabularyTags {
     word_id: Uuid,
     tag_id: Uuid,
 }

@@ -15,5 +15,7 @@ pub enum TranslationVariant {
     LocalizationDate,
     Lang,
     Version,
-    Text
+    Text,
+    CreatedAt,
+    UpdatedAt,
 }

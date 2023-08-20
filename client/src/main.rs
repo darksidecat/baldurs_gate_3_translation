@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use eframe::egui;
+use egui_extras::{Column, TableBuilder};
 
 fn main() -> Result<(), eframe::Error> {
     //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -114,7 +115,7 @@ struct TextEntry {
     uid: String,
     en_text: String,
     sbt_text: String,
-    ua_text: String
+    ua_text: String,
 }
 
 struct MyApp {
@@ -123,37 +124,99 @@ struct MyApp {
 
 impl MyApp {
     fn new(data: Vec<TextEntry>) -> Self {
-        Self {
-            data
-        }
+        Self { data }
     }
-
 }
 
 impl Default for MyApp {
     fn default() -> Self {
-        Self {
-            data: vec![],
-        }
+        Self { data: vec![] }
     }
 }
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("main panel").show(ctx, |ui| {
-            egui::ScrollArea::vertical().min_scrolled_height(800.0).show(ui, |ui | {
-                egui::Grid::new("main_text_grid").striped(true).min_col_width(400.0).show(ui, |ui| {
-                    for row in &mut self.data {
-                        ui.label(&row.uid);
-                        ui.label(&row.en_text);
-                        ui.label(&row.sbt_text);
-                        ui.add(egui::TextEdit::multiline(&mut row.ua_text).desired_width(400.0));
-                        let _ = ui.button("❗");
-                        let _ =ui.button("👍");
-                        ui.end_row();
-                    };
+            let text_size = egui::TextStyle::Body.resolve(ui.style()).size;
+            let h = ui.available_height();
+
+            let table = TableBuilder::new(ui)
+                .striped(true)
+                .resizable(true)
+                .vscroll(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .column(Column::auto())
+                .column(Column::auto())
+                .column(Column::auto())
+                .column(Column::auto())
+                .column(Column::auto())
+                .column(Column::auto())
+                .min_scrolled_height(h);
+
+            table
+                .header(20.0, |mut header| {
+                    header.col(|ui| {
+                        ui.strong("contentuuid");
+                    });
+                    header.col(|ui| {
+                        ui.strong("en");
+                    });
+                    header.col(|ui| {
+                        ui.strong("ЩБТ");
+                    });
+                    header.col(|ui| {
+                        ui.strong("uk");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Error");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Submit");
+                    });
+                })
+                .body(|body| {
+                    body.rows(text_size, self.data.len(), |row_index, mut row| {
+                        row.col(|ui| {
+                            ui.label(self.data.get(row_index).unwrap().uid.clone());
+                        });
+                        row.col(|ui| {
+                            ui.label(self.data.get(row_index).unwrap().en_text.clone());
+                        });
+                        row.col(|ui| {
+                            ui.label(self.data.get(row_index).unwrap().sbt_text.clone());
+                        });
+                        row.col(|ui| {
+                            ui.add(
+                                egui::TextEdit::singleline(
+                                    &mut self.data.get(row_index).unwrap().ua_text.clone(),
+                                )
+                                .desired_width(ui.available_width()),
+                            );
+                        });
+                        row.col(|ui| {
+                            let _ = ui.button("❗");
+                        });
+                        row.col(|ui| {
+                            let _ = ui.button("👍");
+                        });
+                    })
+                })
+        });
+
+        /*egui::TopBottomPanel::top("main panel").show(ctx, |ui| {
+                egui::ScrollArea::vertical().min_scrolled_height(800.0).show(ui, |ui | {
+                    egui::Grid::new("main_text_grid").striped(true).min_col_width(400.0).show(ui, |ui| {
+                        for row in &mut self.data {
+                            ui.label(&row.uid);
+                            ui.label(&row.en_text);
+                            ui.label(&row.sbt_text);
+                            ui.add(egui::TextEdit::multiline(&mut row.ua_text).desired_width(400.0));
+                            let _ = ui.button("❗");
+                            let _ =ui.button("👍");
+                            ui.end_row();
+                        };
+                    });
                 });
-            });
-    });
+        });*/
     }
 }

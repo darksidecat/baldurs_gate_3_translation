@@ -1,18 +1,17 @@
-
 use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts},
     http::{request::Parts, StatusCode},
 };
-use sqlx::postgres::{PgPool};
+use sqlx::postgres::PgPool;
 
 pub struct DatabaseConnection(pub sqlx::pool::PoolConnection<sqlx::Postgres>);
 
 #[async_trait]
 impl<S> FromRequestParts<S> for DatabaseConnection
-    where
-        PgPool: FromRef<S>,
-        S: Send + Sync,
+where
+    PgPool: FromRef<S>,
+    S: Send + Sync,
 {
     type Rejection = (StatusCode, String);
 
@@ -25,12 +24,10 @@ impl<S> FromRequestParts<S> for DatabaseConnection
     }
 }
 
-
-
 /// Utility function for mapping any error into a `500 Internal Server Error` response.
 pub fn internal_error<E>(err: E) -> (StatusCode, String)
-    where
-        E: std::error::Error,
+where
+    E: std::error::Error,
 {
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
