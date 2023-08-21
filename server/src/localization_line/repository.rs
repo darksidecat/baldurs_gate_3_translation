@@ -3,6 +3,7 @@ use crate::localization_line::usecase::CreateTranslationVariant;
 use crate::localization_line::{domain, table};
 use sea_query::{OnConflict, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
+use sqlx::postgres::PgQueryResult;
 use sqlx::{Acquire, Error, Postgres, Transaction};
 
 pub(crate) async fn create(
@@ -55,7 +56,7 @@ pub(crate) async fn create(
 pub(crate) async fn create_many(
     tx: &mut Transaction<'_, Postgres>,
     localization_lines: &[CreateTranslationVariant],
-) -> Result<(), Error> {
+) -> Result<PgQueryResult, Error> {
     let mut builder = Query::insert()
         .into_table(table::TranslationLocation::Table)
         .columns([table::TranslationLocation::Contentuid])
@@ -105,11 +106,10 @@ pub(crate) async fn create_many(
         ]);
     }
     let (query, values) = builder.build_sqlx(PostgresQueryBuilder);
-    sqlx::query_with(&query, values)
+    Ok(sqlx::query_with(&query, values)
         .execute(tx.acquire().await?)
         .await
-        .unwrap();
-    Ok(())
+        .unwrap())
 }
 
 pub(crate) async fn all(

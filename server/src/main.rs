@@ -6,6 +6,9 @@ use crate::localization_line::load::load_localization_lines_from_file;
 use axum::routing::post;
 use axum::Router;
 use sqlx::postgres::PgPoolOptions;
+use tracing::log::LevelFilter;
+use tracing::{Level, Subscriber};
+use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod axum_common;
@@ -17,13 +20,9 @@ mod parse;
 async fn main() {
     let config = config::load_config(None);
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-
     // setup connection pool
     let mut pool = PgPoolOptions::new()
-        .max_connections(20)
+        .max_connections(100)
         .acquire_timeout(Duration::from_secs(3))
         .connect(config.connection_string.as_str())
         .await
@@ -38,7 +37,7 @@ async fn main() {
         )
         .with_state(pool.clone());
 
-    load_localization_lines_from_file(pool.acquire().await.unwrap(), config.localization_root);
+    load_localization_lines_from_file(&pool, config.localization_root).await;
 
     // run it with hyper
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

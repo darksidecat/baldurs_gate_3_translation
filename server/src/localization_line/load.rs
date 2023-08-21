@@ -4,12 +4,11 @@ use crate::localization_line::domain::LocalizationLine;
 use crate::localization_line::usecase::CreateTranslationVariant;
 use crate::parse::parse_translation;
 use chrono::NaiveDateTime;
-use sqlx::pool::PoolConnection;
-use sqlx::Postgres;
+use sqlx::{Pool, Postgres};
 use std::fs::File;
 
-pub fn load_localization_lines_from_file(
-    mut tx: PoolConnection<Postgres>,
+pub async fn load_localization_lines_from_file(
+    mut pool: &Pool<Postgres>,
     file_root: LocalizationRoot,
 ) -> () {
     let file = File::open(file_root.as_str().to_string() + "data/ukrainian.xml").unwrap();
@@ -32,9 +31,11 @@ pub fn load_localization_lines_from_file(
         })
     }
 
+    let mut conn = pool.clone().acquire().await.unwrap();
+
     tokio::spawn(async move {
         for batch in data.chunks(2000) {
-            localization_line::usecase::create_many(&mut tx, batch).await;
+            localization_line::usecase::create_many(&mut conn, batch).await;
         }
     });
     ()

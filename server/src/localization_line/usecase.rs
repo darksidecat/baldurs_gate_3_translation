@@ -21,12 +21,10 @@ pub async fn create_many(
     localization_line: &[CreateTranslationVariant],
 ) -> () {
     let mut tx = pool.begin().await.unwrap();
-    tx.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;")
-        .await?;
 
     let result = repository::create_many(&mut tx, localization_line).await;
     tx.commit().await.unwrap();
-    ()
+    println!("{:?}", result);
 }
 
 pub async fn all(
