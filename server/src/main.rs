@@ -6,19 +6,26 @@ use crate::localization_line::load::load_localization_lines_from_file;
 use axum::routing::post;
 use axum::Router;
 use sqlx::postgres::PgPoolOptions;
-use tracing::log::LevelFilter;
-use tracing::{Level, Subscriber};
-use tracing_subscriber::fmt::writer::MakeWriterExt;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing::log;
 
 mod axum_common;
 mod config;
 pub mod localization_line;
 mod parse;
 
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 #[tokio::main]
 async fn main() {
     let config = config::load_config(None);
+
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "example_tokio_postgres=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
     // setup connection pool
     let mut pool = PgPoolOptions::new()
